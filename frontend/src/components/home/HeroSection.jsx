@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import hero from '../assets/hero.jpg'; 
+import hero from '../../assets/hero.jpg'; 
 import { FiSearch } from 'react-icons/fi';
 
 export default function HeroSection() {

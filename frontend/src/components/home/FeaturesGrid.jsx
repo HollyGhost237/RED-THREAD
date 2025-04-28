@@ -1,15 +1,15 @@
 import React from "react";
-import plant from "../assets/plant.jpg";
-import im1 from "../assets/im1.png";
-import im2 from "../assets/im2.png";
-import im3 from "../assets/im3.png";
-import im4 from "../assets/im4.png";
-import im5 from "../assets/im5.png";
-import im11 from "../assets/im11.png";
-import im22 from "../assets/im22.png";
-import im33 from "../assets/im33.png";
-import im44 from "../assets/im44.png";
-import im55 from "../assets/im55.png";
+import plant from "../../assets/plant.jpg";
+import im1 from "../../assets/im1.png";
+import im2 from "../../assets/im2.png";
+import im3 from "../../assets/im3.png";
+import im4 from "../../assets/im4.png";
+import im5 from "../../assets/im5.png";
+import im11 from "../../assets/im11.png";
+import im22 from "../../assets/im22.png";
+import im33 from "../../assets/im33.png";
+import im44 from "../../assets/im44.png";
+import im55 from "../../assets/im55.png";
 
 const features = [
     {

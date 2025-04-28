@@ -1,7 +1,7 @@
-import HeroSection from '../components/HeroSection';
-import FeaturesGrid from '../components/FeaturesGrid';
-import MedicinalRecipes from '../components/MedicinalRecipes';
-import EducationalBlog from '../components/EducationalBlog';
+import HeroSection from '../components/home/HeroSection';
+import FeaturesGrid from '../components/home/FeaturesGrid';
+import MedicinalRecipes from '../components/home/MedicinalRecipes';
+import EducationalBlog from '../components/home/EducationalBlog';
 
 export default function Home() {
     return (

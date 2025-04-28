@@ -1,5 +1,12 @@
+import RecipeHero from "../components/recette/RecipeHero";
+import RecipeSearchSection from "../components/recette/RecipeSearchSection";
+
 export default function Recette() {
-    return(
-        <h1 className="text-3xl font-bold">About Us</h1>
-    )
+    return (
+        <main>
+                <RecipeHero />
+                <RecipeSearchSection />
+        </main>
+    );
+
 }

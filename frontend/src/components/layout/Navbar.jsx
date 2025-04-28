@@ -25,7 +25,7 @@ export default function Navbar() {
         };
 
     return (
-        <header className="bg-[#031A09] shadow-sm fixed w-full z-50">
+        <header className="bg-[#031A09] shadow-sm sticky top-0 w-full z-50">
             {/* Barre de navigation principale */}
             <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                 {/* Logo avec lien vers l'accueil */}
@@ -75,7 +75,7 @@ export default function Navbar() {
                     )}
 
                     <a 
-                        href="/connexion" 
+                        href="/login" 
                         className="bg-[#E2F87B] flex items-center text-[#316C40] px-4 py-2 rounded-lg hover:bg-[#316C40] hover:text-[#E2F87B] transition-colors"
                     >
                         <img src={profil} alt="profil" className="h-5 w-5 mr-2" />

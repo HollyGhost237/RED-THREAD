@@ -1,12 +1,13 @@
+import { Outlet } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 
-export default function MainLayout({ children }) {
+export default function MainLayout() {
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow">
-            {children}
+            <Outlet />
         </main>
         <Footer />
         </div>
