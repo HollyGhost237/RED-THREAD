@@ -36,7 +36,7 @@ const features = [
     {
         title: "Espace Utilisateur",
         description: "Enregistrez vos plantes et recettez précédent dans votre espace personnel.",
-        link: "/espace",
+        link: "/dashboard",
         imgtitle: im44,
         imageUrl: im4
     },

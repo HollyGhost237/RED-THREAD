@@ -8,6 +8,7 @@ import Blog from './pages/Blog'
 import Forum from './pages/Forum'
 import Register from './pages/register'
 import Login from './pages/login'
+import UserDashboard from './pages/UserDashboard'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="plantes" element={<Plantes />} />
           <Route path="blog" element={<Blog />} />
           <Route path="forum" element={<Forum />} />
+          <Route path='dashboard' element={<UserDashboard />} />
         </Route>
 
         {/* Routes sans navbar/footer */}

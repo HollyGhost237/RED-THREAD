@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
-import { FiMenu, FiX, FiSearch } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FiMenu, FiX, FiSearch, FiUser, FiLogOut } from 'react-icons/fi';
 import logo from '../../assets/logo.png';
-import profil from '../../assets/profil.png';
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
+    const [user, setUser] = useState(null);
+    const navigate = useNavigate();
 
-    // Configuration des liens (peut être externalisée dans un fichier de config)
+    // Vérifier l'authentification au montage
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        setUser(null);
+        navigate('/login');
+    };
+
     const navLinks = [
         { name: 'Accueil', path: '/' },
         { name: 'Recette', path: '/recettes' },
@@ -19,35 +35,29 @@ export default function Navbar() {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        console.log('Recherche:', searchQuery)
-        // ( rediriger vers une page de résultats)
-        setSearchQuery(''); // Réinitialiser le champ de recherche après la soumission
-        };
+        console.log('Recherche:', searchQuery);
+        setSearchQuery('');
+    };
 
     return (
         <header className="bg-[#031A09] shadow-sm sticky top-0 w-full z-50">
-            {/* Barre de navigation principale */}
             <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-                {/* Logo avec lien vers l'accueil */}
-                <a href="/">
+                <Link to="/">
                     <img src={logo} alt="Logo" className="h-8 sm:h-10 w-auto" />
-                </a>
+                </Link>
 
-                {/* Menu Desktop */}
                 <nav className="hidden md:flex space-x-6">
                     {navLinks.map((link) => (
-                        <a 
+                        <Link 
                             key={link.name}
-                            href={link.path}
+                            to={link.path}
                             className="text-white hover:text-[#E2F87B] hover:underline active:text-[#E2F87B] transition-colors"
-                            onClick={() => setIsOpen(false)}
                         >
                             {link.name}
-                        </a>
+                        </Link>
                     ))}
                 </nav>
 
-                {/* Barre de recherche et connexion (desktop) */}
                 <div className="hidden md:flex items-center space-x-4">
                     {showSearch ? (
                         <form onSubmit={handleSearch} className="flex">
@@ -56,47 +66,73 @@ export default function Navbar() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Rechercher..."
-                                className="px-3 py-2 rounded-l-lg focus:outline-none text-[#294E28] w-48 transition-all duration-300"
+                                className="px-3 py-2 rounded-l-lg focus:outline-none text-[#294E28] w-48"
                             />
                             <button 
                                 type="submit"
-                                className="bg-[#E2F87B] text-[#316C40] px-3 py-2 rounded-r-lg hover:bg-[#316C40] hover:text-[#E2F87B] transition-colors"
+                                className="bg-[#E2F87B] text-[#316C40] px-3 py-2 rounded-r-lg hover:bg-[#316C40] hover:text-[#E2F87B]"
                             >
                                 <FiSearch className="h-5 w-5" />
                             </button>
                         </form>
                     ) : (
-                        <button 
-                            onClick={() => setShowSearch(true)}
-                            className="text-white hover:text-[#E2F87B]"
-                        >
+                        <button onClick={() => setShowSearch(true)} className="text-white hover:text-[#E2F87B]">
                             <FiSearch className="h-5 w-5" />
                         </button>
                     )}
 
-                    <a 
-                        href="/login" 
+                {user ? (
+                    <div className="relative group">
+                        <button className="flex items-center space-x-2">
+                            {user.avatar ? (
+                                <img 
+                                    src={user.avatar} 
+                                    alt="Photo de profil"
+                                    className="w-8 h-8 rounded-full object-cover border-2 border-[#E2F87B]"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-[#E2F87B] flex items-center justify-center">
+                                    <FiUser className="text-[#316C40]" />
+                                </div>
+                            )}
+                            <span className="text-white">{user.name.split(' ')[0]}</span>
+                        </button>
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-50">
+                            <Link 
+                                to="/dashboard" 
+                                className="block px-4 py-2 text-gray-800 hover:bg-[#E2F87B] transition-colors"
+                            >
+                                Mon dashboard
+                            </Link>
+                            <button
+                                onClick={handleLogout}
+                                className="w-full text-left px-4 py-2 text-gray-800 hover:bg-[#E2F87B] transition-colors flex items-center"
+                            >
+                                <FiLogOut className="mr-2" /> Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <Link 
+                        to="/login" 
                         className="bg-[#E2F87B] flex items-center text-[#316C40] px-4 py-2 rounded-lg hover:bg-[#316C40] hover:text-[#E2F87B] transition-colors"
                     >
-                        <img src={profil} alt="profil" className="h-5 w-5 mr-2" />
+                        <FiUser className="h-5 w-5 mr-2" />
                         Connexion
-                    </a>
+                    </Link>
+                )}
                 </div>
 
-                {/* Menu Mobile */}
                 <button 
                     className="md:hidden text-white focus:outline-none"
                     onClick={() => setIsOpen(!isOpen)}
-                    aria-label="Menu mobile"
                 >
                     {isOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
                 </button>
             </div>
 
-            {/* Menu Mobile (contenu) */}
             {isOpen && (
                 <div className="md:hidden bg-[#031A09] px-4 pb-4">
-                    {/* Barre de recherche mobile */}
                     <form onSubmit={handleSearch} className="flex mb-4">
                         <input
                             type="text"
@@ -105,34 +141,47 @@ export default function Navbar() {
                             placeholder="Rechercher..."
                             className="flex-1 px-3 py-2 rounded-l-lg focus:outline-none text-[#294E28]"
                         />
-                        <button 
-                            type="submit"
-                            className="bg-[#E2F87B] text-[#316C40] px-3 py-2 rounded-r-lg"
-                        >
+                        <button type="submit" className="bg-[#E2F87B] text-[#316C40] px-3 py-2 rounded-r-lg">
                             <FiSearch className="h-5 w-5" />
                         </button>
                     </form>
 
                     <div className="flex flex-col space-y-4">
                         {navLinks.map((link) => (
-                            <a
+                            <Link
                                 key={link.name}
-                                href={link.path}
+                                to={link.path}
                                 className="text-white hover:text-[#E2F87B] py-2 border-b border-[#294E28]"
                                 onClick={() => setIsOpen(false)}
                             >
                                 {link.name}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                     
-                    <a 
-                        href="/connexion"
-                        className="w-full bg-[#E2F87B] flex items-center justify-center text-[#316C40] px-4 py-2 rounded-lg mt-4"
-                    >
-                        <img src={profil} alt="profil" className="h-5 w-5 mr-2" />
-                        Connexion
-                    </a>
+                    {user ? (
+                        <>
+                            <Link 
+                                to="/dashboard"
+                                className="w-full bg-[#E2F87B] flex items-center justify-center text-[#316C40] px-4 py-2 rounded-lg mt-4"
+                            >
+                                Mon compte
+                            </Link>
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center justify-center text-white px-4 py-2 rounded-lg mt-2 border border-white"
+                            >
+                                Déconnexion
+                            </button>
+                        </>
+                    ) : (
+                        <Link 
+                            to="/login"
+                            className="w-full bg-[#E2F87B] flex items-center justify-center text-[#316C40] px-4 py-2 rounded-lg mt-4"
+                        >
+                            Connexion
+                        </Link>
+                    )}
                 </div>
             )}
         </header>

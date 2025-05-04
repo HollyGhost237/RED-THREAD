@@ -49,7 +49,7 @@ export default function Login() {
         setIsLoading(true);
         
         try {
-            const response = await axios.post('http://localhost:8000/api/login', formData);
+            const response = await axios.post('http://localhost:8000/api/auth/login', formData);
             
             if (rememberMe) {
                 localStorage.setItem('auth_token', response.data.token);
@@ -58,6 +58,8 @@ export default function Login() {
             }
             
             localStorage.setItem('user', JSON.stringify(response.data.user));
+            console.log(response.data.user);
+            
             navigate('/dashboard');
         } catch (error) {
             if (error.response?.status === 422) {
@@ -137,7 +139,7 @@ export default function Login() {
                                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                     style={{ color: '#E2F87B' }}
                                 >
-                                    {showPassword ? <FiEyeOff /> : <FiEye />}
+                                    {showPassword ? <FiEyeOff className='text-[#316C40] '/> : <FiEye className='text-[#316C40] ' />}
                                 </button>
                                 {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password[0]}</p>}
                             </div>

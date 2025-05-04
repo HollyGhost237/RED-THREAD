@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { FiEye, FiEyeOff } from "react-icons/fi"; // Pour les icônes SHOW
-import '../index.css';
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import bgsign from '../assets/bgsign.jpg';
 
 export default function Register() {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
-        role: '',
+        email: '',
+        role: 'user', 
+        professional_title: '', 
         password: '',
         password_confirmation: ''
     });
@@ -33,20 +34,36 @@ export default function Register() {
         setIsLoading(true);
         
         try {
-            const response = await axios.post('http://localhost:8000/api/register', {
-                ...formData,
-                name: `${formData.firstName} ${formData.lastName}`
-            });
+            const payload = {
+                name: `${formData.firstName} ${formData.lastName}`,
+                email: formData.email,
+                password: formData.password,
+                password_confirmation: formData.password_confirmation,
+                role: formData.role,
+                ...(formData.role === 'health_professional' && { 
+                    professional_title: formData.professional_title 
+                })
+            };
+
+            const response = await axios.post('http://localhost:8000/api/auth/register', payload);
             
-            localStorage.setItem('auth_token', response.data.token);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            navigate('/dashboard');
+            if (response.data.token) {
+                localStorage.setItem('auth_token', response.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                
+                // Gestion spéciale pour les professionnels non vérifiés
+                if (response.data.user.role === 'health_professional' && !response.data.user.is_verified) {
+                    navigate('/verification-pending');
+                } else {
+                    navigate('/dashboard');
+                }
+            }
         } catch (error) {
             if (error.response?.status === 422) {
                 setErrors(error.response.data.errors);
             } else {
                 console.error('Registration error:', error);
-                alert('Une erreur est survenue lors de l\'inscription');
+                alert(error.response?.data?.message || 'Une erreur est survenue');
             }
         } finally {
             setIsLoading(false);
@@ -55,9 +72,10 @@ export default function Register() {
 
     const isFormValid = formData.firstName && 
                     formData.lastName && 
-                    formData.role && 
+                    formData.email &&
                     formData.password && 
-                    formData.password === formData.password_confirmation;
+                    formData.password === formData.password_confirmation &&
+                    (formData.role !== 'health_professional' || formData.professional_title);
 
     return (
         <div className="max-h-screen md:px-20  flex flex-col md:flex-row bg-[#E5F4E4]">
@@ -97,24 +115,53 @@ export default function Register() {
                         {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName[0]}</p>}
                     </div>
 
-                    {/* Champ Fonction */}
+                    {/* Champ email */}
+                    <div>
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Entrez votre email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-[#E2F87B] placeholder:font-bold placeholder:text-[#316C40] shadow-lg shadow-[#316C40]/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#316C40]"
+                            required
+                        />
+                        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
+                    </div>
+
+                    {/* Champ role */}
                     <div>
                         <label className="hidden text-gray-700 mb-2">Votre Fonction</label>
                         <select
                             name="role"
                             value={formData.role}
-                            placeholder="Sélectionnez votre fonction"
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-[#316C40] placeholder:text-white placeholder:font-bold text-white font-bold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#316C40]"
+                            className="w-full px-4 py-3 bg-[#316C40] text-white font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-[#316C40]"
                             required
                         >
-                            <option value="">Amateur</option>
-                            <option value="herboriste">Herboriste</option>
-                            <option value="particulier">Particulier</option>
-                            <option value="professionnel">Professionnel de santé</option>
+                            <option value="user">Amateur</option>
+                            <option value="health_professional">Professionnel de santé</option>
+                            <option value="admin">Administrateur</option>
                         </select>
                         {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role[0]}</p>}
                     </div>
+
+                    {formData.role === 'health_professional' && (
+                        <div>
+                            <input
+                                type="text"
+                                name="professional_title"
+                                placeholder="Votre titre professionnel"
+                                value={formData.professional_title}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 bg-[#E2F87B] placeholder:font-bold placeholder:text-[#316C40] shadow-lg shadow-[#316C40]/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#316C40]"
+                                required={formData.role === 'health_professional'}
+                            />
+                            {errors.professional_title && (
+                                <p className="text-red-500 text-sm mt-1">{errors.professional_title[0]}</p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Champ Mot de passe avec toggle */}
                     <div>
