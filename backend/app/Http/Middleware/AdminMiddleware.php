@@ -10,20 +10,20 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user()?->isAdmin()) {
+        $user = $request->user();
+        
+        if (!$user || $user->role !== 'admin') {
             return response()->json([
                 'message' => 'Administrator privileges required',
-                'docs' => route('api.docs') // Optionnel
+                // 'docs' => route('api.docs') 
             ], Response::HTTP_FORBIDDEN);
         }
 
-        // Vérification CSRF pour les formulaires admin
-        if ($request->isMethod('POST|PUT|PATCH|DELETE') && 
-            !$request->routeIs('admin.*')) {
-            abort_unless(
-                $request->header('X-Requested-With') === 'XMLHttpRequest',
-                Response::HTTP_FORBIDDEN
-            );
+        // Vérification supplémentaire pour les requêtes non-GET
+        if (!$request->isMethod('GET') && !$request->expectsJson()) {
+            return response()->json([
+                'message' => 'JSON requests only for admin actions'
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         return $next($request);

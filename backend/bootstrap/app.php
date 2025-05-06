@@ -5,9 +5,6 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
 return Application::configure(basePath: dirname(__DIR__))
-    ->withMiddleware(function (Middleware $middleware) {
-        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
-    })
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -15,14 +12,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Middleware globaux
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+        
+        // Alias de middleware
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'verified.health.professional' => \App\Http\Middleware\CheckHealthProfessional::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Gestion des exceptions
     })->create();
-    $app->middlewareAliases([
-        'admin' => \App\Http\Middleware\AdminMiddleware::class,
-    ]);
 
 // bootstrap/app.php
 // use App\Http\Middleware\CheckHealthProfessional;

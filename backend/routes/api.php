@@ -1,55 +1,38 @@
 <?php
 
-// use App\Http\Controllers\AuthController;
-// use App\Http\Controllers\PostController;
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Route;
-
-// // Route::get('/user', function (Request $request) {
-// //     return $request->user();
-// // })->middleware('auth:sanctum');
-
-// Route::apiResource('posts', PostController::class);
-
-// Route::post('/register', [AuthController::class, 'register']);
-// Route::post('/login', [AuthController::class, 'login']);
-// Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); -->
-
-
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\API\DiscussionController;
-// use App\Http\Controllers\API\ProfileController;
-use App\Http\Controllers\API\ReplyController;
 use App\Http\Controllers\API\ProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\API\ReplyController;
 use App\Http\Controllers\API\RecipeController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PlanteController;
+use Illuminate\Support\Facades\Route;
 
 // Authentification
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
-    Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
-    Route::middleware('auth:sanctum')->get('user', [AuthController::class, 'user']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::get('user', [AuthController::class, 'user']);
+        Route::post('resend-verification', [AuthController::class, 'resendVerification']);
+    });
 });
 
 // Routes publiques
-Route::get('public/recipes', [RecipeController::class, 'indexPublic']);
-Route::get('public/recipes/{recipe}', [RecipeController::class, 'showPublic']);
+Route::get('recipes/public', [RecipeController::class, 'indexPublic']);
+Route::get('recipes/public/{recipe}', [RecipeController::class, 'showPublic']);
 Route::get('discussions', [DiscussionController::class, 'index']);
 Route::get('discussions/{discussion}', [DiscussionController::class, 'show']);
 
-// Routes protégées
+// Routes protégées (utilisateurs connectés)
 Route::middleware('auth:sanctum')->group(function () {
-    // Dashboard
-    Route::prefix('dashboard')->group(function () {
-        Route::get('saved-recipes', [RecipeController::class, 'savedRecipes']);
-        Route::get('recent-activity', [DiscussionController::class, 'index']);
-    });
-    
     // Profil
-    Route::post('user/profile', [ProfileController::class, 'update']);
-    Route::get('user/profile', [ProfileController::class, 'show']);
+    Route::prefix('user')->group(function () {
+        Route::get('profile', [ProfileController::class, 'show']);
+        Route::put('profile', [ProfileController::class, 'update']);
+    });
     
     // Recettes
     Route::prefix('recipes')->group(function () {
@@ -58,29 +41,31 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{recipe}', [RecipeController::class, 'show']);
         Route::put('/{recipe}', [RecipeController::class, 'update']);
         Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
-        Route::post('/{recipe}/like', [RecipeController::class, 'like']);
+        Route::post('/{recipe}/like', [RecipeController::class, 'toggleLike']);
+        Route::get('/saved', [RecipeController::class, 'savedRecipes']);
     });
     
     // Forum
-    Route::apiResource('discussions', DiscussionController::class)->except(['index', 'show']);
-    Route::apiResource('discussions.replies', ReplyController::class)->shallow();
+    Route::prefix('discussions')->group(function () {
+        Route::post('/', [DiscussionController::class, 'store']);
+        Route::put('/{discussion}', [DiscussionController::class, 'update']);
+        Route::delete('/{discussion}', [DiscussionController::class, 'destroy']);
+        Route::post('/{discussion}/replies', [ReplyController::class, 'store']);
+    });
     
     // Réponses
-    Route::get('discussions/{discussion}/replies', [ReplyController::class, 'index']);
-    Route::post('discussions/{discussion}/replies', [ReplyController::class, 'store']);
-    Route::put('replies/{reply}', [ReplyController::class, 'update']);
-    Route::delete('replies/{reply}', [ReplyController::class, 'destroy']);
+    Route::prefix('replies')->group(function () {
+        Route::put('/{reply}', [ReplyController::class, 'update']);
+        Route::delete('/{reply}', [ReplyController::class, 'destroy']);
+    });
 });
 
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/pending-professionals', [AdminController::class, 'getPendingProfessionals']);
-    Route::put('/verify-professional/{user}', [AdminController::class, 'verifyProfessional']);
-});
-
-
+// Routes admin
 Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::get('professionals/pending', [AdminController::class, 'getPendingProfessionals']);
+    Route::get('pending-professionals', [AdminController::class, 'getPendingProfessionals']);
     Route::put('professionals/{user}/verify', [AdminController::class, 'verifyProfessional']);
     Route::put('professionals/{user}/reject', [AdminController::class, 'rejectProfessional']);
-    Route::get('notifications', [AdminController::class, 'getNotifications']);
+    Route::get('stats', [AdminController::class, 'getStats']);
 });
+
+Route::get('/plantes', [PlanteController::class, 'index']);

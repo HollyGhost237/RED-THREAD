@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Notifications\NewProfessionalNotification;
 use App\Notifications\WelcomeNotification;
 use App\Notifications\NewUserNotification;
+use App\Notifications\ProfessionalVerificationResendNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -19,7 +20,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'sometimes|in:user,health_professional',
+            'role' => 'sometimes|in:user,health_professional,admin',
             'professional_title' => 'required_if:role,health_professional'
         ]);
 
@@ -58,7 +59,9 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        // Normalisation de l'email
+        $email = strtolower(trim($request->email));
+        $user = User::where('email', $email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -66,10 +69,12 @@ class AuthController extends Controller
             ]);
         }
 
-        // Vérification pour les professionnels de santé
+        // Réponse standardisée pour les professionnels non vérifiés
         if ($user->role === 'health_professional' && !$user->is_verified) {
             return response()->json([
-                'message' => 'Votre compte professionnel est en attente de vérification'
+                'message' => 'Votre compte professionnel est en attente de vérification',
+                'user' => $user->makeHidden(['password', 'remember_token']),
+                'requires_verification' => true
             ], 403);
         }
 
@@ -97,6 +102,29 @@ class AuthController extends Controller
                 'create_recipe' => $request->user()->isHealthProfessional(),
                 'moderate_content' => $request->user()->isAdmin()
             ]
+        ]);
+    }
+
+    public function resendVerification(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user || $user->role !== 'health_professional' || $user->is_verified) {
+            abort(403, 'Action non autorisée');
+        }
+    
+        \DB::table('verification_attempts')->insert([
+            'user_id' => $user->id,
+            'attempted_at' => now()
+        ]);
+    
+        Admin::all()->each->notify(
+            new ProfessionalVerificationResendNotification($user)
+        );
+    
+        return response()->json([
+            'message' => 'Demande renvoyée avec succès',
+            'next_attempt_allowed_after' => now()->addHours(12)->toIso8601String()
         ]);
     }
 }

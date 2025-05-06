@@ -3,59 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Admin;
+use App\Notifications\ProfessionalVerificationResendNotification;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use App\Notifications\ProfessionalVerifiedNotification;
+use App\Notifications\ProfessionalVerifiedAdminNotification;
+use App\Notifications\ProfessionalRejectedNotification;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AdminController extends Controller
 {
+    use AuthorizesRequests;
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
-        $this->middleware('admin'); 
+        // $this->middleware('auth:sanctum');
+    //     $this->middleware('can:viewAny,App\Models\User');
+    //     $this->middleware('can:verifyProfessional,user')->only(['verifyProfessional']);
+    //     $this->middleware('can:rejectProfessional,user')->only(['rejectProfessional']);
     }
 
     public function getPendingProfessionals()
     {
         $professionals = User::where('role', 'health_professional')
-                            ->where('is_verified', false)
-                            ->with(['recipes', 'discussions'])
-                            ->withCount(['recipes', 'discussions'])
-                            ->orderBy('created_at', 'desc')
-                            ->paginate(10); // Pagination pour de meilleures performances
+            ->where('is_verified', false)
+            ->with(['recipes', 'discussions'])
+            ->withCount(['recipes', 'discussions'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         return response()->json([
             'professionals' => $professionals,
             'stats' => [
                 'total_pending' => User::where('role', 'health_professional')
-                                    ->where('is_verified', false)
-                                    ->count()
+                    ->where('is_verified', false)
+                    ->count()
             ]
         ]);
     }
 
     public function verifyProfessional(User $user)
     {
-        if ($user->role !== 'health_professional') {
-            return response()->json(['message' => 'Cet utilisateur n\'est pas un professionnel'], 400);
-        }
-
-        if ($user->is_verified) {
-            return response()->json(['message' => 'Ce professionnel est déjà vérifié'], 400);
-        }
+        $this->authorize('verifyProfessional', $user);
 
         $user->update([
             'is_verified' => true,
             'verified_at' => now()
         ]);
 
-        // Notification à l'utilisateur
         $user->notify(new ProfessionalVerifiedNotification());
 
-        // Notification aux autres admins
-        Admin::where('id', '!=', auth()->id())->each->notify(
-            new ProfessionalVerifiedAdminNotification($user)
-        );
+        // Notifier les autres admins
+        User::where('role', 'admin')
+            ->where('id', '!=', auth()->id())
+            ->each(function ($admin) use ($user) {
+                $admin->notify(new ProfessionalVerifiedAdminNotification($user));
+            });
 
         return response()->json([
             'message' => 'Professionnel vérifié avec succès',
@@ -65,20 +67,41 @@ class AdminController extends Controller
 
     public function rejectProfessional(Request $request, User $user)
     {
+        $this->authorize('rejectProfessional', $user);
+
         $request->validate([
             'reason' => 'required|string|max:500'
         ]);
 
-        if ($user->role !== 'health_professional' || $user->is_verified) {
-            return response()->json(['message' => 'Action non autorisée'], 403);
-        }
-
-        // Notification à l'utilisateur avec la raison
-        $user->notify(new \App\Notifications\ProfessionalRejectedNotification($request->reason));
-
-        // Optionnel : Supprimer le compte si nécessaire
-        // $user->delete();
+        $user->notify(new ProfessionalRejectedNotification($request->reason));
 
         return response()->json(['message' => 'Demande professionnelle rejetée']);
     }
+
+    public function getStats()
+{
+    return response()->json([
+        'pending_count' => User::where('role', 'health_professional')
+            ->where('is_verified', false)
+            ->count(),
+        'verified_today' => User::where('role', 'health_professional')
+            ->whereDate('verified_at', today())
+            ->count()
+    ]);
+}
+
+// App\Http\Controllers\AuthController.php
+public function resendVerification()
+{
+    $user = auth()->user();
+    
+    if ($user->role !== 'health_professional' || $user->is_verified) {
+        return response()->json(['message' => 'Action non autorisée'], 403);
+    }
+
+    // Envoyer la notification
+    $user->notify(new ProfessionalVerificationResendNotification());
+
+    return response()->json(['message' => 'Demande renvoyée avec succès']);
+}
 }
