@@ -49,24 +49,26 @@ export default function Login() {
         setIsLoading(true);
         
         try {
-            const response = await axios.post('http://localhost:8000/api/auth/login', formData);
-            
-            if (rememberMe) {
-                localStorage.setItem('auth_token', response.data.token);
-            } else {
-                sessionStorage.setItem('auth_token', response.data.token);
-            }
-            
+            const response = await axios.post('http://localhost:8000/api/auth/login', {
+                email: formData.email.toLowerCase().trim(), // Normalisation
+                password: formData.password
+            });
+    
+            // Stockage du token
+            (rememberMe ? localStorage : sessionStorage).setItem('auth_token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            console.log(response.data.user);
-            
+    
             navigate('/dashboard');
+            
         } catch (error) {
-            if (error.response?.status === 422) {
+            if (error.response?.status === 403 && error.response.data?.requires_verification) {
+                navigate('/verification-pending');
+            } 
+            else if (error.response?.status === 422) {
                 setErrors(error.response.data.errors);
-            } else {
-                console.error('Login error:', error);
-                alert('Email ou mot de passe incorrect');
+            }
+            else {
+                alert(error.response?.data?.message || 'Erreur de connexion');
             }
         } finally {
             setIsLoading(false);

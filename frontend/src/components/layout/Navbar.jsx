@@ -86,7 +86,7 @@ export default function Navbar() {
                         <button className="flex items-center space-x-2">
                             {user.avatar ? (
                                 <img 
-                                    src={user.avatar} 
+                                src={`http://localhost:8000/storage/${user.avatar?.replace('public/', '')}`} 
                                     alt="Photo de profil"
                                     className="w-8 h-8 rounded-full object-cover border-2 border-[#E2F87B]"
                                 />

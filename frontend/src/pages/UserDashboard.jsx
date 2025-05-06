@@ -4,6 +4,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import RecipeFormModal from './RecipeFormModal';
 import { FiSettings, FiEdit2, FiMessageSquare, FiClock, FiBookmark, FiUser } from 'react-icons/fi';
+import { ChevronRight, User, ArrowLeft, Shield, Home } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UserDashboard() {
     const [user, setUser] = useState(null);
@@ -17,6 +19,8 @@ export default function UserDashboard() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showRecipeForm, setShowRecipeForm] = useState(false);
     const [canCreateRecipes, setCanCreateRecipes] = useState(false);
+    const [hovered, setHovered] = useState(null);
+    const [isExpanded, setIsExpanded] = useState(true);
 
     // Initialisation correcte du formData avec les données utilisateur
     const [formData, setFormData] = useState({
@@ -205,6 +209,8 @@ export default function UserDashboard() {
                     localStorage.removeItem('user');
                     navigate('/login');
                 }
+
+                console.log(user.avatar);
             } finally {
                 setLoading(false);
             }
@@ -523,9 +529,8 @@ export default function UserDashboard() {
                         <div className="relative">
                             {user?.avatar ? (
                                 <img 
-                                    src={`/storage/avatars/${user.avatar}`}
-                                    className="w-20 h-20 rounded-full object-cover"
-                                    alt="Photo de profil"
+                                    className="object-cover border-2 border-[#316C40] rounded-full w-20 h-20 flex items-center justify-center text-3xl"
+                                    src={`http://localhost:8000/storage/${user.avatar?.replace('public/', '')}`}
                                     onError={(e) => {
                                         e.target.onerror = null; 
                                         e.target.src = '/default-avatar.jpg';
@@ -683,33 +688,129 @@ export default function UserDashboard() {
 
                     {/* Option admin */}
                     {user?.role === 'admin' && (
-                        <div className="bg-white rounded-xl shadow-sm p-6">
-                            <h2 className="text-xl font-semibold mb-4">Administration</h2>
-                            <ul className="space-y-3">
-                                <li>
-                                    <Link 
+                        <AnimatePresence>
+                            <motion.div 
+                                className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 relative overflow-hidden"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {/* Bouton retour vers le dashboard */}
+                                <motion.div 
+                                    className="absolute top-6 right-6"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                {/* <Link 
+                                    to="/dashboard" 
+                                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 font-medium hover:bg-indigo-100 transition-all duration-200"
+                                >
+                                    <Home size={18} />
+                                    <span>Dashboard</span>
+                                </Link> */}
+                            </motion.div>
+                                
+                                {/* En-tête avec animation */}
+                            <motion.div 
+                                className="flex items-center gap-3 mb-8 cursor-pointer"
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                whileHover={{ x: 5 }}
+                            >
+                                <div className="bg-indigo-100 p-2 rounded-lg">
+                                    <Shield size={20} className="text-indigo-600" />
+                                </div>
+                                <h2 className="text-xl font-semibold text-gray-800">Administration</h2>
+                                <motion.div
+                                    animate={{ rotate: isExpanded ? 0 : -90 }}
+                                    className="ml-2"
+                                >
+                                    <ArrowLeft size={16} className="text-gray-400" />
+                                </motion.div>
+                            </motion.div>
+                                
+                            {/* Liste des liens administratifs avec animation */}
+                            <motion.div
+                                animate={{ 
+                                    height: isExpanded ? 'auto' : 0,
+                                    opacity: isExpanded ? 1 : 0
+                                }}
+                            >
+                                <motion.div
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="mt-2"
+                                >
+                                    <Link
                                         to="/admin/professionals"
-                                        className="flex items-center gap-2 p-3 hover:bg-gray-50 rounded-lg transition"
+                                        className="flex items-center justify-between p-4 rounded-xl transition-all duration-200 group"
+                                        style={{
+                                            backgroundColor: hovered === 'professionals' ? 'rgb(254, 242, 242)' : 'white',
+                                            boxShadow: hovered === 'professionals' ? '0 4px 12px -2px rgba(0, 0, 0, 0.1)' : 'none',
+                                        }}
+                                        onMouseEnter={() => setHovered('professionals')}
+                                        onMouseLeave={() => setHovered(null)}
                                     >
-                                        <span className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-500">
-                                            👨‍⚕️
-                                        </span>
-                                        <span>Professionnels en attente</span>
+                                        <div className="flex items-center gap-3">
+                                            <motion.div 
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center bg-red-100"
+                                                whileHover={{ rotate: 5 }}
+                                            >
+                                                <motion.div
+                                                    animate={{ 
+                                                    scale: hovered === 'professionals' ? 1.2 : 1
+                                                    }}
+                                                    className="text-red-500"
+                                                >
+                                                    <User size={22} />
+                                                </motion.div>
+                                            </motion.div>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium text-gray-800">Professionnels en attente</span>
+                                                <span className="text-xs text-gray-500">Valider les nouvelles inscriptions</span>
+                                            </div>
+                                        </div>
+                                    
+                                        <div className="flex items-center gap-3">
+                                            {/* <motion.span 
+                                                className="px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-600"
+                                                whileHover={{ scale: 1.1 }}
+                                                animate={{
+                                                    y: [0, -3, 0],
+                                                    transition: {
+                                                    repeat: hovered === 'professionals' ? Infinity : 0,
+                                                    repeatType: "reverse",
+                                                    duration: 1
+                                                    }
+                                                }}
+                                            >
+                                                5
+                                            </motion.span> */}
+                                            <motion.div
+                                                animate={{ 
+                                                    x: hovered === 'professionals' ? 5 : 0,
+                                                    opacity: hovered === 'professionals' ? 1 : 0.5
+                                                }}
+                                                className="group-hover:text-indigo-500"
+                                            >
+                                                <ChevronRight size={20} className="text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                                            </motion.div>
+                                        </div>
                                     </Link>
-                                </li>
-                                <li>
-                                    <Link 
-                                        to="/admin/recipes"
-                                        className="flex items-center gap-2 p-3 hover:bg-gray-50 rounded-lg transition"
-                                    >
-                                        <span className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-500">
-                                            📝
-                                        </span>
-                                        <span>Modérer les recettes</span>
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
+                                </motion.div>
+                            </motion.div>
+                                
+                                {/* Section pliée/dépliée */}
+                                {!isExpanded && (
+                                <div className="text-center mt-2 text-sm text-gray-500">
+                                    Cliquez pour développer
+                                </div>
+                                )}
+                                
+                                {/* Gradient décoratif */}
+                                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br from-indigo-50 to-transparent rounded-full opacity-50 z-0" />
+                            </motion.div>
+                        </AnimatePresence>
                     )}
 
                 </div>
