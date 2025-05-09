@@ -68,4 +68,21 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function ()
     Route::get('stats', [AdminController::class, 'getStats']);
 });
 
+Route::middleware('auth:sanctum')->group(function () {
+    // Récupérer les recettes likées
+    Route::get('/user/favorites', [RecipeController::class, 'getUserFavorites']);
+    
+    // Like/Unlike
+    Route::post('/recipes/{recipe}/like', [RecipeController::class, 'like']);
+    Route::delete('/recipes/{recipe}/like', [RecipeController::class, 'unlike']);
+    
+    // Activités
+    Route::get('/user/activities', [ActivityController::class, 'index']);
+});
+
 Route::get('/plantes', [PlanteController::class, 'index']);
+Route::middleware(['auth:sanctum', 'healthprofessional'])->post('/recipes', [RecipeController::class, 'store']);
+
+Route::get('/pain-types', function () {
+    return response()->json(\App\Models\PainType::all());
+});

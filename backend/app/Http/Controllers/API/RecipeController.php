@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\RecipeResource;
 use App\Http\Requests\StoreRecipeRequest;
 use App\Http\Requests\UpdateRecipeRequest;
+use Str;
 
 class RecipeController extends Controller
 {
@@ -98,24 +99,27 @@ class RecipeController extends Controller
      */
     public function store(StoreRecipeRequest $request)
     {
-        // Validation est gérée par StoreRecipeRequest
-        $validated = $request->validated();
-
-        // Upload de l'image
-        $imagePath = $request->file('cover_image')->store('recipes', 'public');
-        $validated['cover_image'] = $imagePath;
-
-        // Création de la recette
-        $recipe = $request->user()->recipes()->create($validated);
-
-        // Association des types de douleur
-        if ($request->has('pain_types')) {
-            $recipe->painTypes()->sync($request->pain_types);
-        }
-
-        return new RecipeResource(
-            $recipe->load(['user', 'painTypes'])
-        );
+        // 1. Traitement de l'image
+        $imagePath = $request->file('cover_image')->store('recipes', 'public'); // Stockage dans /storage/app/public/recipes
+    
+        // 2. Création de la recette
+        $recipe = Recipe::create([
+            'user_id' => auth()->id(),
+            'title' => $request->title,
+            'slug' => Str::slug($request->title), // Génère un slug automatique
+            'description' => $request->description,
+            'ingredients' => json_encode($request->ingredients), // Convertit le tableau en JSON
+            'preparation_steps' => $request->preparation_steps,
+            'preparation_time' => $request->preparation_time,
+            'cover_image' => $imagePath,
+            'is_approved' => auth()->user()->isAdmin(), // Auto-approuvée si admin
+        ]);
+    
+        // 3. Liaison avec les types de douleur
+        $recipe->painTypes()->sync($request->pain_types);
+    
+        // 4. Retourne la recette formatée
+        return new RecipeResource($recipe);
     }
 
     /**
@@ -210,6 +214,14 @@ class RecipeController extends Controller
         return response()->json([
             'message' => $message,
             'likes_count' => $recipe->interactions()->where('type', 'like')->count()
+        ]);
+    }
+
+    public function recentActivities()
+    {
+        $user = auth()->user();
+        return response()->json([
+            'activities' => $user->recentActivities()
         ]);
     }
 }

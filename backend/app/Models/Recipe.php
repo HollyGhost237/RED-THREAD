@@ -47,6 +47,12 @@ class Recipe extends Model
         return $this->morphMany(Interaction::class, 'interactable');
     }
 
+    // Pour récupérer les recettes d'un utilisateur
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
     // Accesseurs
     public function getLikesCountAttribute()
     {
@@ -67,4 +73,9 @@ class Recipe extends Model
     {
         return 'slug';
     }
+
+    public function getCoverImageUrlAttribute()
+{
+    return asset('storage/app/public/' . $this->cover_image); // Adaptez selon votre système de stockage
+}
 }

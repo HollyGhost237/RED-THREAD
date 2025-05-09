@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Alias de middleware
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'verified.health.professional' => \App\Http\Middleware\CheckHealthProfessional::class,
+            'healthprofessional' => \App\Http\Middleware\CheckHealthProfessional::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

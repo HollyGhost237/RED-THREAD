@@ -101,4 +101,17 @@ public function getContributionsAttribute()
     {
         return $query->where('is_verified', false);
     }
+
+    public function recentActivities()
+{
+    // Récupère les recettes créées + les discussions initiées
+    $recipes = $this->recipes()->with('painTypes')->latest()->get();
+    $discussions = $this->discussions()->latest()->get();
+
+    // Fusionne et trie par date
+    return $recipes->concat($discussions)
+        ->sortByDesc('created_at')
+        ->values()
+        ->take(10); // Limite à 10 activités
+}
 }
