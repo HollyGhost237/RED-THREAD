@@ -11,4 +11,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['date-fns', '@date-fns/locale']
   },
+  // server: {
+  //   proxy: {
+  //     '/api': 'http://localhost:8000', 
+  //   },
+  // },
 })

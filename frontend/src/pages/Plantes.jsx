@@ -136,12 +136,12 @@ export default function Plantes() {
                             {expandedPlant === plante.id && (
                                 <div className="px-6 pb-6 space-y-5 animate-fadeIn border-t border-gray-100 pt-4">
                                     <div>
-                                        <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                                        {/* <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                                             <img
                                                 src={`${API_URL}/storage/plantes/logo.png`}
-                                                alt="logo" size={18} />
+                                                alt="logo" size={4} />
                                             Description complète:
-                                        </h3>
+                                        </h3> */}
                                         <p className="text-gray-600 mt-2 pl-6">{plante.descriptionComplete}</p>
                                     </div>
 

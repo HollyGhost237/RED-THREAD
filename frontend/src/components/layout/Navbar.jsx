@@ -97,8 +97,8 @@ export default function Navbar() {
                             )}
                             <span className="text-white">{user.name.split(' ')[0]}</span>
                         </button>
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-50">
-                            <Link 
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible z-50 transition-all duration-300">
+                        <Link 
                                 to="/dashboard" 
                                 className="block px-4 py-2 text-gray-800 hover:bg-[#E2F87B] transition-colors"
                             >
